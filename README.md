@@ -65,3 +65,7 @@ npm run build
   with separate test accounts.
 - Run the checks above against the production environment, then smoke-test the
   home, friends, post, and messaging routes after deployment.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
