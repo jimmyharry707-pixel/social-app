@@ -1,29 +1,10 @@
-const posts = [
-  {
-    name: "Maya Chen",
-    username: "mayacreates",
-    initials: "MC",
-    color: "coral",
-    time: "12 min ago",
-    content:
-      "Spent the morning sketching ideas for a tiny neighborhood garden. There’s something about starting with a blank page (and a very full coffee) that just feels right.",
-    likes: "24",
-    comments: "8",
-    topic: "Creative life",
-  },
-  {
-    name: "Jordan Lee",
-    username: "jordanlee",
-    initials: "JL",
-    color: "blue",
-    time: "1 hour ago",
-    content:
-      "A little reminder I needed today: you don’t have to have it all figured out to take the next small step.",
-    likes: "16",
-    comments: "3",
-    topic: "Thoughts",
-  },
-];
+import Link from "next/link";
+import { Suspense } from "react";
+
+import { getSupabaseEnv } from "@/lib/supabase/env";
+
+import { AccountMenu } from "./account-menu";
+import { FeedPostList } from "./blog/feed";
 
 const people = [
   { name: "Nina Patel", detail: "Loves books & long walks", initials: "NP", color: "yellow" },
@@ -59,6 +40,8 @@ function Wordmark() {
 }
 
 export default function Home() {
+  const createPostHref = getSupabaseEnv() ? "/blog/new" : "/auth/login";
+
   return (
     <div className="app-shell" id="home">
       <header className="topbar">
@@ -75,11 +58,7 @@ export default function Home() {
           <a className="icon-button notification-button" href="#notifications" aria-label="Notifications">
             ♧<span className="notification-dot" />
           </a>
-          <a className="account-chip" href="#profile">
-            <Avatar initials="SK" color="lavender" size="small" />
-            <span>Sam Kim</span>
-            <span className="chevron" aria-hidden="true">⌄</span>
-          </a>
+          <AccountMenu />
         </div>
       </header>
 
@@ -93,14 +72,12 @@ export default function Home() {
             <a className="nav-link" href="#stories">
               <span className="nav-icon" aria-hidden="true">▤</span> Stories
             </a>
-            <a className="nav-link" href="#people">
+            <Link className="nav-link" href="/friends">
               <span className="nav-icon" aria-hidden="true">♧</span> Friends
-              <span className="nav-count">3</span>
-            </a>
-            <a className="nav-link" href="#messages">
+            </Link>
+            <Link className="nav-link" href="/messages">
               <span className="nav-icon" aria-hidden="true">▱</span> Messages
-              <span className="nav-count nav-count-new">2</span>
-            </a>
+            </Link>
           </nav>
           <div className="sidebar-divider" />
           <p className="sidebar-label">YOUR CIRCLES</p>
@@ -164,47 +141,29 @@ export default function Home() {
           <section className="composer-card" id="new-post" aria-label="Create a post">
             <div className="composer-top">
               <Avatar initials="SK" color="lavender" />
-              <a href="#write-post" className="composer-prompt">What’s on your mind, Sam?</a>
+              <Link href={createPostHref} className="composer-prompt">What story would you like to share?</Link>
             </div>
             <div className="composer-bottom">
               <span className="composer-hint">A thought, a story, anything.</span>
-              <a className="button button-dark" href="#write-post">Write a post <span aria-hidden="true">↗</span></a>
+              <Link className="button button-dark" href={createPostHref}>Write a post <span aria-hidden="true">↗</span></Link>
             </div>
           </section>
 
           <div className="feed-heading">
-            <h2>Your feed</h2>
-            <a className="feed-filter" href="#feed">For you <span aria-hidden="true">⌄</span></a>
+            <h2>Your people’s stories</h2>
+            <Link className="feed-filter" href={createPostHref}>Write a post <span aria-hidden="true">↗</span></Link>
           </div>
 
-          <div className="post-list">
-            {posts.map((post) => (
-              <article className="post-card" key={post.username}>
-                <header className="post-header">
-                  <Avatar initials={post.initials} color={post.color} />
-                  <div className="post-author">
-                    <a href={`#${post.username}`} className="author-name">{post.name}</a>
-                    <span>@{post.username} <span aria-hidden="true">·</span> {post.time}</span>
-                  </div>
-                  <button className="more-button" type="button" aria-label={`More options for ${post.name}'s post`}>···</button>
-                </header>
-                <p className="post-topic">{post.topic}</p>
-                <p className="post-content">{post.content}</p>
-                <footer className="post-actions">
-                  <button type="button" className="post-action"><span aria-hidden="true">♡</span> {post.likes}</button>
-                  <button type="button" className="post-action"><span aria-hidden="true">◯</span> {post.comments} replies</button>
-                  <button type="button" className="post-action post-share"><span aria-hidden="true">↗</span> Share</button>
-                </footer>
-              </article>
-            ))}
-          </div>
+          <Suspense fallback={<div className="post-list"><article className="post-card post-loading" /></div>}>
+            <FeedPostList />
+          </Suspense>
         </main>
 
         <aside className="right-sidebar">
           <section className="people-card" id="people" aria-labelledby="people-title">
             <div className="section-heading">
               <h2 id="people-title">People to know</h2>
-              <a href="#people">See all</a>
+              <Link href="/friends">See all</Link>
             </div>
             <div className="people-list">
               {people.map((person) => (
@@ -214,29 +173,29 @@ export default function Home() {
                     <a href={`#${person.initials}`} className="author-name">{person.name}</a>
                     <span>{person.detail}</span>
                   </div>
-                  <button className="add-friend-button" type="button" aria-label={`Send ${person.name} a friend request`}>＋</button>
+                  <Link className="add-friend-button" href="/friends" aria-label={`Find ${person.name} and send a friend request`}>＋</Link>
                 </div>
               ))}
             </div>
-            <a className="text-link" href="#people">Find your people <span aria-hidden="true">→</span></a>
+            <Link className="text-link" href="/friends">Find your people <span aria-hidden="true">→</span></Link>
           </section>
 
           <section className="messages-card" id="messages" aria-labelledby="messages-title">
             <div className="section-heading">
               <h2 id="messages-title">Your conversations</h2>
-              <a href="#messages" aria-label="All conversations">↗</a>
+              <Link href="/messages" aria-label="All conversations">↗</Link>
             </div>
-            <a href="#conversation-maya" className="conversation-row">
+            <Link href="/messages" className="conversation-row">
               <span className="online-avatar"><Avatar initials="MC" color="coral" /><span /></span>
               <span className="conversation-info"><strong>Maya Chen</strong><span>That garden idea sounds lovely!</span></span>
               <span className="conversation-time">2m</span>
-            </a>
-            <a href="#conversation-theo" className="conversation-row">
+            </Link>
+            <Link href="/messages" className="conversation-row">
               <Avatar initials="TM" color="green" />
               <span className="conversation-info"><strong>Theo Martin</strong><span>Sent you a photo</span></span>
               <span className="conversation-time">1h</span>
-            </a>
-            <a href="#messages" className="text-link">Open your inbox <span aria-hidden="true">→</span></a>
+            </Link>
+            <Link href="/messages" className="text-link">Open your inbox <span aria-hidden="true">→</span></Link>
           </section>
 
           <div className="quote-card">
