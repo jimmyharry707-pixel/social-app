@@ -27,6 +27,7 @@ Open [http://localhost:3000](http://localhost:3000).
    - `supabase/migrations/202611110002_auth_profiles.sql`
    - `supabase/migrations/202611110003_blog_post_titles.sql`
    - `supabase/migrations/202611110004_direct_chat.sql`
+   - `supabase/migrations/202611110005_post_likes.sql`
 
 The migration creates profiles, friend requests, posts, conversations, members,
 and messages. Row-level security is enabled on every table; user-owned content
@@ -56,13 +57,14 @@ npm run build
 - Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and
   `NEXT_PUBLIC_SITE_URL` in the hosting provider; never configure a service-role
   key in the browser.
-- Apply all four SQL migrations in order and verify the `messages` table is
+- Apply all five SQL migrations in order and verify the `messages` table is
   enabled for Supabase Realtime.
 - Add the production `<site-url>/auth/callback` to Supabase Auth's allowed
   redirect URLs and verify email confirmation settings.
 - Test sign-up/confirmation, sign-in/sign-out, profile edits, friend request
   transitions, post ownership, direct-message membership, and realtime updates
-  with separate test accounts.
+  with separate test accounts. Users can also like and unlike posts, with counts
+  visible to the post's author and friends.
 - Run the checks above against the production environment, then smoke-test the
   home, friends, post, and messaging routes after deployment.
 

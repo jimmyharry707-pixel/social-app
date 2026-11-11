@@ -47,6 +47,37 @@ function refreshBlogPaths(postId?: string) {
   }
 }
 
+export async function setPostLike(formData: FormData) {
+  const postId = getString(formData, "postId");
+  const shouldLike = getString(formData, "liked");
+
+  if (!uuidPattern.test(postId) || !["true", "false"].includes(shouldLike)) {
+    throw new Error("This post like request is invalid.");
+  }
+
+  const { supabase, userId } = await getAuthenticatedClient();
+  const result =
+    shouldLike === "true"
+      ? await supabase
+          .from("post_likes")
+          .upsert(
+            { post_id: postId, user_id: userId },
+            { onConflict: "post_id,user_id", ignoreDuplicates: true },
+          )
+      : await supabase
+          .from("post_likes")
+          .delete()
+          .eq("post_id", postId)
+          .eq("user_id", userId);
+
+  if (result.error) {
+    throw new Error("Could not update your like. Make sure the post likes migration has been applied.");
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/blog/${postId}`);
+}
+
 export async function createPost(
   _previousState: PostFormState,
   formData: FormData,

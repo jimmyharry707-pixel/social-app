@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
+import { PostLikeButton, type PostLikeSummary } from "./like-button";
 import type { BlogPost, PostAuthor } from "./post-view";
 
 const previewPosts: BlogPost[] = [
@@ -33,10 +34,14 @@ function PostCard({
   post,
   author,
   isOwner,
+  likeCount,
+  liked,
 }: {
   post: BlogPost;
   author: PostAuthor | null;
   isOwner: boolean;
+  likeCount: number;
+  liked: boolean;
 }) {
   const authorName = author?.display_name ?? "Gather member";
   const initials = authorName
@@ -69,10 +74,13 @@ function PostCard({
         </div>
       ) : (
         <Link className="feed-post-link" href={`/blog/${post.id}`}>
-        {post.title && <h3>{post.title}</h3>}
-        <p>{post.body}</p>
-        <span className="feed-post-read">Read story <span aria-hidden="true">→</span></span>
+          {post.title && <h3>{post.title}</h3>}
+          <p>{post.body}</p>
+          <span className="feed-post-read">Read story <span aria-hidden="true">→</span></span>
         </Link>
+      )}
+      {!isPreview && (
+        <PostLikeButton count={likeCount} liked={liked} postId={post.id} />
       )}
     </article>
   );
@@ -89,6 +97,8 @@ export async function FeedPostList() {
               author={previewAuthors[post.author_id]}
               isOwner={false}
               key={post.id}
+              likeCount={0}
+              liked={false}
               post={post}
             />
           ))}
@@ -151,6 +161,20 @@ export async function FeedPostList() {
     );
   }
 
+  const { data, error: likesError } = await supabase.rpc(
+    "get_post_like_summaries",
+    { p_post_ids: posts.map((post) => post.id) },
+  );
+
+  if (likesError) {
+    throw new Error("Could not load post likes. Make sure the post likes migration has been applied.");
+  }
+
+  const likeSummaries = (data ?? []) as PostLikeSummary[];
+  const likesByPostId = new Map(
+    (likeSummaries ?? []).map((summary) => [summary.post_id, summary]),
+  );
+
   return (
     <div className="post-list">
       {posts.map((post) => (
@@ -158,6 +182,8 @@ export async function FeedPostList() {
           author={authorsById.get(post.author_id) ?? null}
           isOwner={post.author_id === currentUserId}
           key={post.id}
+          likeCount={likesByPostId.get(post.id)?.like_count ?? 0}
+          liked={likesByPostId.get(post.id)?.liked_by_me ?? false}
           post={post as BlogPost}
         />
       ))}

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { PostArticle, type BlogPost, type PostAuthor } from "../post-view";
+import type { PostLikeSummary } from "../like-button";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -72,12 +73,25 @@ async function PostContent({ params }: { params: PostParams }) {
     throw new Error("Could not load the post author.");
   }
 
+  const { data, error: likesError } = await supabase.rpc(
+    "get_post_like_summaries",
+    { p_post_ids: [post.id] },
+  );
+
+  if (likesError) {
+    throw new Error("Could not load post likes. Make sure the post likes migration has been applied.");
+  }
+
+  const likeSummary = ((data ?? []) as PostLikeSummary[])[0];
+
   return (
     <div className="blog-content">
       <Link className="back-link" href="/">← Back to your feed</Link>
       <PostArticle
         author={author as PostAuthor | null}
         currentUserId={claimsData.claims.sub}
+        likeCount={likeSummary?.like_count ?? 0}
+        liked={likeSummary?.liked_by_me ?? false}
         post={post as BlogPost}
       />
     </div>
